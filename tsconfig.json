@@ -24,6 +24,6 @@
       "@/*": ["./*"]
     }
   },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", "config/pinecone.js", "types/chat.js", "utils/cn.js", "utils/pinecone-client.js", "utils/openai-client.js", "utils/makechain.js"],
   "exclude": ["node_modules"]
 }
