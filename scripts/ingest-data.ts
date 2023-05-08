@@ -4,6 +4,7 @@ import { PineconeStore } from 'langchain/vectorstores/pinecone';
 import { WeaviateStore } from 'langchain/vectorstores/weaviate';
 import { pinecone } from '@/utils/pinecone-client';
 import { CustomPDFLoader } from '@/utils/customPDFLoader';
+import { Document } from 'langchain/document';
 import { PINECONE_INDEX_NAME, PINECONE_NAME_SPACE } from '@/config/pinecone';
 import { DirectoryLoader } from 'langchain/document_loaders/fs/directory';
 
@@ -16,33 +17,19 @@ const client = weaviate.client({
 });
 
 
-// let classObj = {
-//   "class": "Document",
-//   "description": "A class called document",
-//   "vectorizer": "text2vec-openai",
-//   "moduleConfig": {
-//     "text2vec-openai": {
-//       "type": "text",
-//       "model": "ada",
-//       "modelVersion": "002"
-//     }
-//   },
-// }
+let classObj = {
+  "class": "Document",
+  "description": "A class called document",
+  "vectorizer": "text2vec-openai",
+  "moduleConfig": {
+    "text2vec-openai": {
+      "type": "text",
+      "model": "ada",
+      "modelVersion": "002"
+    }
+  },
+}
 
-
-
-// let classObj = {
-//   "class": "TextDavinci003",
-//   "description": "A class called document",
-//   "vectorizer": "text2vec-openai",
-//   "moduleConfig": {
-//     "text2vec-openai": {
-//       "type": "text",
-//       "model": "davinci",
-//       "modelVersion": "003"
-//     }
-//   },
-// }
 
 /**
  * Create a class
@@ -79,7 +66,7 @@ const client = weaviate.client({
  */
 // client.schema
 //   .classDeleter()
-//   .withClassName("Document")
+//   .withClassName("TextDavinci003")
 //   .do()
 //   .then(res => {
 //     console.log(res);
@@ -93,8 +80,128 @@ const client = weaviate.client({
 export const run = async () => {
   try {
 
+    await client.schema
+    .classDeleter()
+    .withClassName("Document")
+    .do()
+  
+    await client
+    .schema
+    .classCreator()
+    .withClass(classObj)
+    .do()
 
 
+
+    // const endings = [
+    //   `
+    //     == Ending#1 ==
+    //     Description:
+    //     - Traumatisme à la tête avec possible commotion cérébrale
+    //     Critères:
+    //     - Doit être âgé de 52 ans et plus
+    //     - Doit être enceinte
+    //     - Doit présenter des symptômes tels vertiges.
+        // - Doit présenter des maux de tête intenses.
+    //   `,
+    //   `
+    //     == Ending#2 ==
+    //     Description: 
+    //     - Traumatisme à la tête avec possible commotion cérébrale
+    //     Critères:
+    //     - Doit être âgé de 30 ans et moins
+        // - Doit être enceinte
+        // - Doit présenter des symptômes tels que des nausées ou vomissements.
+        // - Doit présenter des troubles de la vue (vision brouillée, vision double, sensibilité à la lumière, etc.)
+    //   `,
+    //   `
+    //     == Ending#3 ==
+    //     Description:
+    //     - Trouble de l'attention avec ou sans hyperactivité (TDAH)
+    //     Critères:
+    //     - Doit présenter des symptômes persistants d'inattention, d'hyperactivité et/ou d'impulsivité qui interfèrent avec la vie quotidienne
+    //     - Doit présenter ces symptômes depuis l'enfance ou depuis au moins 6 mois
+    //     - Doit présenter ces symptômes dans plusieurs environnements différents (par exemple, à la maison, à l'école, au travail)
+    //     - Les symptômes ne doivent pas être causé par un autre trouble mental ou neurologique
+    //     - Les symptômes doivent causer une détresse significative ou une altération du fonctionnement social, scolaire ou professionnel
+    //   `,
+    //   `
+    //     == Ending#4 ==
+    //     Description:
+    //     - Céphalée (mal de tête)
+    //     Critères:
+    //     - Doit être un mal de tête sévère ou pire que d'habitude
+    //     - Doit être soudain et d'apparition rapide
+    //     - Doit être associé à une raideur de la nuque et/ou à une photophobie (sensibilité à la lumière)
+    //     - Doit être associé à une confusion mentale ou à une diminution de la vigilance
+    //     - Doit être accompagné de nausées et/ou de vomissements.
+    //   `
+    // ]
+
+    // let documents = endings.map(o => {
+    //   return new Document({ 
+    //     pageContent: o
+    //   })
+    // })
+
+
+
+    const endings = [
+      {
+        endingId: 1,
+        criteria: [
+          'Doit avoir 50 ans et plus',
+          'Doit être enceinte',
+          'Doit avoir la diarrhée'
+        ]
+      },
+      {
+        endingId: 2,
+        criteria: [
+          'Doit avoir 50 ans et moins',
+          'Doit être enceinte'
+        ]
+      },
+      {
+        endingId: 3,
+        criteria: [
+          'Doit avoir 50 ans et moins'
+        ]
+      },
+      {
+        endingId: 4,
+        criteria: [
+          'Doit avoir 50 ans et plus'
+        ]
+      },
+      {
+        endingId: 5,
+        criteria: [
+          'Doit être âgé de 30 ans et moins'
+        ]
+      },
+      {
+        endingId: 6,
+        criteria: [
+          'Doit présenter des symptômes tels vertiges'
+        ]
+      }
+    ]
+
+    let documents = endings.map(o => {
+      let pageContent = ''
+      o.criteria.forEach(l => {
+        pageContent += `- ${l}\n`
+      })
+      
+      return new Document({ 
+        pageContent,
+        metadata: {
+          endingId: o.endingId,
+          criteria: o.criteria
+        }
+      })
+    })
 
 
     // /**
@@ -114,17 +221,19 @@ export const run = async () => {
 
     // const documents = await splitter.createDocuments([text]);
 
-    // // const documents = await splitter.splitDocuments([
-    // //   new Document({ 
-    // //     pageContent: text 
-    // //   }),
-    // // ]);
+    // const documents = await splitter.splitDocuments([
+    //   new Document({ 
+    //     pageContent: text 
+    //   }),
+    // ]);
 
-    // console.log('\n')
-    // console.log( 
-    //   documents
-    //  )
-    // console.log('\n')
+
+
+    console.log('\n')
+    console.log( 
+      documents
+     )
+    console.log('\n')
 
 
 
@@ -144,21 +253,23 @@ export const run = async () => {
   
 
 
-    // /**
-    //  * Create a store and fill it with some texts + metadata
-    //  * 
-    //  * @source https://js.langchain.com/docs/modules/indexes/vector_stores/integrations/weaviate#usage-insert-documents
-    //  */
-    // await WeaviateStore.fromDocuments(
-    //   documents,
-    //   new OpenAIEmbeddings(),
-    //   {
-    //     client,
-    //     indexName: "TextDavinci003",
-    //     textKey: "text",
-    //     metadataKeys: ["foo"],
-    //   }
-    // );
+    /**
+     * Create a store and fill it with some texts + metadata
+     * 
+     * @source https://js.langchain.com/docs/modules/indexes/vector_stores/integrations/weaviate#usage-insert-documents
+     */
+
+
+    await WeaviateStore.fromDocuments(
+      documents,
+      new OpenAIEmbeddings(),
+      {
+        client,
+        indexName: "Document",
+        textKey: "text",
+        metadataKeys: ["criteria", "endingId"],
+      }
+    );
 
 
 
